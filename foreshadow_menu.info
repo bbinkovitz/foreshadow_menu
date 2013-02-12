@@ -1,0 +1,6 @@
+name = Foreshadow Menu
+description = Displays a non-linked title for menu items to whose content the user does not have access.
+core = 7.x
+dependencies[] = content_access
+dependencies[] = menu
+configure = admin/config/structure/menu/foreshadowing
