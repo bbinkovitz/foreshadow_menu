@@ -1,26 +1,29 @@
 <?php
 
 /**
-* Implements hook_help.
-*
-* Displays help and module information.
-*
-* @param path
-*   Which path of the site we're using to display help
-* @param arg
-*   Array that holds the current path as returned from arg() function
-*/
-function foreshadow_menu_help($path, $arg){
-  switch ($path){
+ * @file
+ * Module to expose non-clickable versions of menu items the user can't visit
+ */
+
+/**
+ * Implements hook_help().
+ * Displays help and module information.
+ * @param path
+ *   Which path of the site we're using to display help
+ * @param arg
+ *   Array that holds the current path as returned from arg() function
+ */
+function foreshadow_menu_help($path, $arg) {
+  switch ($path) {
     case "admin/help#foreshadow_menu";
-        return '<p>'. t('For the specified menu, displays ALL menu child titles, regardless of user permissions. Only displays links for content for which the user has permissions, otherwise displays title in plain text.') .'</p>';
-        break;
+      return '<p>' . t('For the specified menu, displays ALL menu child titles, regardless of user permissions. Only displays links for content for which the user has permissions, otherwise displays title in plain text.') . '</p>';
+      break;
     }
   }
 
 /**
-* Implements hook_block_info().
-**/
+ * Implements hook_block_info().
+ */
 function foreshadow_menu_block_info() {
   $blocks['foreshadow_menu'] = array(
     'info' => t('Foreshadow Menu'), //The name that will appear in the block list.
@@ -30,53 +33,52 @@ function foreshadow_menu_block_info() {
 }
 
 /**
-* Implements hook_block_view().
-*
-* Prepares the contents of the block.
-*/
+ * Implements hook_block_view().
+ * Gets the list of links in menu and creates a new array of links, including
+ * non-clickable link titles for links where permissions aren't granted.
+ * The content of the block is an array of the values returned by $items
+ */
 function foreshadow_menu_block_view($delta = '') {
-    /**
-    *
-    * creates the array
-    *
-    **/
-    function foreshadow_menu_contents(){
-        module_load_include('module', 'menu');
-        $foreshadow_menu_items = menu_load_links('menu-program-menu'); //get the list of links in the menu
-        $items[] = array(); //create an array of links
-        foreach ($foreshadow_menu_items as $foreshadow_menu_item) { // each item in the menu needs to be built
-            $foreshadow_menu_item_info = menu_link_load($foreshadow_menu_item['mlid']); // get the info about the menu item using its mlid
-            $foreshadow_menu_item_access = $foreshadow_menu_item_info['access']; //pull out the info about the current user's node access permissions
-            $foreshadow_menu_path = $foreshadow_menu_item['link_path']; // pull out the info about the menu item's link path
-            if ($foreshadow_menu_item_access == 1){ // if the current user has access to the linked node
-                $items[] = array( // create the array
-                    'data' => l($foreshadow_menu_item['link_title'], $foreshadow_menu_path, array('attributes' => array('class' => array('mlid-'.$foreshadow_menu_item['mlid'], 'access-'.$foreshadow_menu_item_access)))) // then add a themed link with custom classes to the array of links
-                );
-            }
-            else{
-                $items[] = array(
-                    'data' => $foreshadow_menu_item['link_title'] //otherwise just add a title with no linkage.
-                );
-            }//end else
-        }//end foreach
-    }//end foreshadow_menu_contents()
-    $block['content'] = array('items' => $items); // the content of the block is an array of the values returned by $items
-
-  switch($delta){ //if $delta
-    case 'foreshadow_menu': // == 'foreshadow_menu'
-    $block['subject'] = t('Foreshadow Menu'); //the subject of the block is Foreshadow Menu
-    $result = foreshadow_menu_contents();//$result is the value returned by foreshadow_menu_contents() (which should be $block's contents?)
-    return $block; //output the block
+  function foreshadow_menu_contents() {
+    module_load_include('module', 'menu');
+    //get the list of links in the menu
+    $foreshadow_menu_items = menu_load_links('menu-program-menu');
+    //create an array for links
+    $items[] = array();
+    foreach ($foreshadow_menu_items as $foreshadow_menu_item) {
+      $foreshadow_menu_item_info = menu_link_load($foreshadow_menu_item['mlid']);
+      //pull out the info about the current user's node access permissions
+      $foreshadow_menu_item_access = $foreshadow_menu_item_info['access'];
+      $foreshadow_menu_path = $foreshadow_menu_item['link_path'];
+      if ($foreshadow_menu_item_access == 1) {
+      // if the current user has access to the linked node, create a link array.
+        $items[] = array(
+          'data' => l($foreshadow_menu_item['link_title'], $foreshadow_menu_path, array('attributes' => array('class' => array('mlid-' . $foreshadow_menu_item['mlid'], 'access-' . $foreshadow_menu_item_access)))) // then add a themed link with custom classes to the array of links
+        );
+      }
+      else {
+        $items[] = array(
+          'data' => $foreshadow_menu_item['link_title'] //otherwise just add a title with no linkage.
+        );
+      }
     }
+  }
+  $block['content'] = array('items' => $items);
+
+  switch ($delta) {
+    case 'foreshadow_menu':
+    $block['subject'] = t('Foreshadow Menu');
+    $result = foreshadow_menu_contents();
+    return $block;
+  }
 }
 
 /**
-*
-* Implements hook_menu()
-*
-**/
-
-function foreshadow_menu_menu(){
+ *
+ * Implements hook_menu().
+ *
+ */
+function foreshadow_menu_menu() {
     $items = array();
 
     $items['admin/structure/menu/foreshadow_menu'] = array(
@@ -91,14 +93,14 @@ function foreshadow_menu_menu(){
 }
 
 /**
-* Page callback: foreshadow menu settings
-* @see foreshadow_menu_menu()
-*/
+ * Page callback: foreshadow menu settings
+ * @see foreshadow_menu_menu()
+ */
 function foreshadow_menu_admin() {
   // List all the menu titles.
   $menus = menu_load_all();
   $menu_titles = array();
-  foreach($menus as $menu){
+  foreach ($menus as $menu) {
       $menu_title = $menu['title'];
           $menu_titles[] = $menu_title;
   }
