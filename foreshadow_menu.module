@@ -6,6 +6,11 @@
  */
 
 /**
+ * Define constants.
+ */
+define('FORESHADOW_MENU_MENUS', 0);
+
+/**
  * Implements hook_help().
  * Displays help and module information.
  * @param path
@@ -42,37 +47,81 @@ function foreshadow_menu_block_view($delta = '') {
   function foreshadow_menu_contents() {
     module_load_include('module', 'menu');
     //get the list of links in the menu
-    $foreshadow_menu_items = menu_load_links('menu-program-menu');
-    //create an array for links
-    $items[] = array();
-    foreach ($foreshadow_menu_items as $foreshadow_menu_item) {
-      $foreshadow_menu_item_info = menu_link_load($foreshadow_menu_item['mlid']);
-      //pull out the info about the current user's node access permissions
-      $foreshadow_menu_item_access = $foreshadow_menu_item_info['access'];
-      $foreshadow_menu_path = $foreshadow_menu_item['link_path'];
-      if ($foreshadow_menu_item_access == 1) {
-      // if the current user has access to the linked node, create a link array.
-        $items[] = array(
-          'data' => l($foreshadow_menu_item['link_title'], $foreshadow_menu_path, array('attributes' => array('class' => array('mlid-' . $foreshadow_menu_item['mlid'], 'access-' . $foreshadow_menu_item_access)))) // then add a themed link with custom classes to the array of links
-        );
+    /*
+     * @todo: make this support more than one menu. Multiple blocks, one per menu.
+     */
+ //   $menu_list = variable_get('foreshadow_menu_menus', FORESHADOW_MENU_MENUS);
+    $menu = variable_get('foreshadow_menu_menus', FORESHADOW_MENU_MENUS);
+//    foreach ($menu_list as $menu) {
+      if (!empty($menu)) {
+        $foreshadow_menu_items = menu_load_links($menu);
+        //create an array for links
+        $items = array();
+        foreach ($foreshadow_menu_items as $foreshadow_menu_item) {
+          $foreshadow_menu_item_info = menu_link_load($foreshadow_menu_item['mlid']);
+          //pull out the info about the current user's node access permissions
+          $foreshadow_menu_item_access = $foreshadow_menu_item_info['access'];
+          $foreshadow_menu_path = $foreshadow_menu_item['link_path'];
+          if ($foreshadow_menu_item_access == 1) {
+          // if the current user has access to the linked node, create a link array.
+            $items[] = array(
+              'data' => l($foreshadow_menu_item['link_title'], $foreshadow_menu_path, array('attributes' => array('class' => array('mlid-' . $foreshadow_menu_item['mlid'], 'access-' . $foreshadow_menu_item_access)))) // then add a themed link with custom classes to the array of links
+            );
+          }
+          else {
+            $items[] = array(
+              'data' => $foreshadow_menu_item['link_title'] //otherwise just add a title with no linkage.
+            );
+          }
+        }
       }
-      else {
-        $items[] = array(
-          'data' => $foreshadow_menu_item['link_title'] //otherwise just add a title with no linkage.
-        );
-      }
-    }
+//    }
+    return $items;
   }
-  $block['content'] = array('items' => $items);
-
   switch ($delta) {
     case 'foreshadow_menu':
     $block['subject'] = t('Foreshadow Menu');
-    $result = foreshadow_menu_contents();
+    $block['content'] = '<ul class="menu foreshadow-menu">';
+    $items = foreshadow_menu_contents();
+    foreach ($items as $item) {
+      /*
+       * @todo: Give menu list an ID from menu name.
+       * @todo: Make markup match native menu rendering.
+       */
+      $block['content'] .= '<li class="leaf">';
+      $block['content'] .= $item['data'];
+      $block['content'] .= '</li>';
+    }
+    $block['content'] .= '</ul>';
     return $block;
   }
 }
 
+
+/**
+ * Page callback: foreshadow menu settings
+ * @see foreshadow_menu_menu()
+ */
+function foreshadow_menu_admin() {
+  // List all the menu titles.
+  $menus = menu_load_all();
+  $menu_titles = array();
+  foreach ($menus as $menu) {
+    $menu_title = $menu['title'];
+    $key = $menu['menu_name'];
+    $menu_titles[$key] = $menu_title;
+  }
+  // Supply checkboxes for choosing which menus to apply this to.
+  $form['foreshadow_menu_menus'] = array(
+    '#type' => 'radios',
+    '#options' => $menu_titles,
+    '#title' => t('Which menu to foreshadow?'),
+    '#default_value' => variable_get('foreshadow_menu_menus', FORESHADOW_MENU_MENUS),
+    '#description' => t('Which form to display in the block.'),
+    '#required' => TRUE,
+  );
+  return system_settings_form($form);
+}
 /**
  *
  * Implements hook_menu().
@@ -90,28 +139,4 @@ function foreshadow_menu_menu() {
         'type' => MENU_NORMAL_ITEM,
     );
     return $items;
-}
-
-/**
- * Page callback: foreshadow menu settings
- * @see foreshadow_menu_menu()
- */
-function foreshadow_menu_admin() {
-  // List all the menu titles.
-  $menus = menu_load_all();
-  $menu_titles = array();
-  foreach ($menus as $menu) {
-      $menu_title = $menu['title'];
-          $menu_titles[] = $menu_title;
-  }
-  // Supply checkboxes for choosing which menus to apply this to.
-  $form['foreshadow_menu_menu'] = array(
-    '#type' => 'checkboxes',
-    '#options' => $menu_titles,
-    '#title' => t('Which menu to foreshadow?'),
-    '#default_value' => array(variable_get('foreshadow_menu_menu', 'Main Menu')),
-    '#description' => t('Which form to display in the block.'),
-    '#required' => TRUE,
-  );
-  return system_settings_form($form);
 }
