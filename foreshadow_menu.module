@@ -87,6 +87,8 @@ function foreshadow_menu_block_view($delta = '') {
       /*
        * @todo: Give menu list an ID from menu name.
        * @todo: Make markup match native menu rendering.
+       * @todo: Support hierarchical menus.
+       * @todo: There's got to be a menu object render function right? I should probably be using that.
        */
       $block['content'] .= '<li class="leaf">';
       $block['content'] .= $item['data'];
