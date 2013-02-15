@@ -49,6 +49,7 @@ function foreshadow_menu_block_view($delta = '') {
     //get the list of links in the menu
     /*
      * @todo: make this support more than one menu. Multiple blocks, one per menu.
+     * See branch "add-multimenu-support".
      */
  //   $menu_list = variable_get('foreshadow_menu_menus', FORESHADOW_MENU_MENUS);
     $menu = variable_get('foreshadow_menu_menus', FORESHADOW_MENU_MENUS);
@@ -87,8 +88,7 @@ function foreshadow_menu_block_view($delta = '') {
       /*
        * @todo: Give menu list an ID from menu name.
        * @todo: Make markup match native menu rendering.
-       * @todo: Support hierarchical menus.
-       * @todo: There's got to be a menu object render function right? I should probably be using that.
+       * @todo: Support hierarchical menus: see branch 'add-hierarchy-support'
        */
       $block['content'] .= '<li class="leaf">';
       $block['content'] .= $item['data'];
